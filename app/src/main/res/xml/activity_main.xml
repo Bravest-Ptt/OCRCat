@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <SwitchPreference
+        android:defaultValue="false"
+        android:key="switch_open"
+        android:summary="show all windows"
+        android:title="Show Windows" />
+    <SwitchPreference
+        android:defaultValue="false"
+        android:key="switch_window_overlay"
+        android:summary="set this in settings"
+        android:title="Open overlay window" />
+    <Preference
+        android:defaultValue="false"
+        android:key="check_screen_shot"
+        android:summary="点我，选中弹框的‘不再显示’，然后点击‘立即开始’"
+        android:title="截屏权限" />
+</PreferenceScreen>
