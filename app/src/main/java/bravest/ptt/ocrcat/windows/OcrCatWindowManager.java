@@ -2,11 +2,19 @@ package bravest.ptt.ocrcat.windows;
 
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.Point;
 import android.media.projection.MediaProjection;
 import android.media.projection.MediaProjectionManager;
+import android.os.Environment;
+import android.os.Handler;
+import android.os.Message;
 import android.util.Log;
 import android.view.View;
 
+import java.io.File;
+import java.io.FileOutputStream;
+
+import bravest.ptt.ocrcat.utils.DensityUtil;
 import bravest.ptt.ocrcat.utils.ToastUtils;
 
 /**
@@ -20,6 +28,14 @@ public class OcrCatWindowManager implements ScreenShotButton.OnScreenShotListene
     private ScreenShotButton mButton;
     private ScreenClipperWindow mClipper;
     private ResultWindow mResultWindow;
+
+    private Handler mHandler = new Handler() {
+        @Override
+        public void handleMessage(Message msg) {
+            super.handleMessage(msg);
+
+        }
+    };
 
     public OcrCatWindowManager(Context context) {
         mContext = context;
@@ -50,12 +66,50 @@ public class OcrCatWindowManager implements ScreenShotButton.OnScreenShotListene
         return mButton.isShowing() || mClipper.isShowing() || mResultWindow.isShowing();
     }
 
-    @Override
-    public void onScreenShot(Bitmap bitmap) {
-        Log.d(TAG, "onScreenShot: bitmap = " + bitmap);
-    }
-
     public void setUpMediaProjection(MediaProjection mp) {
         mButton.setUpMediaProjection(mp);
+    }
+
+    @Override
+    public void onScreenShotStart() {
+        mClipper.setVisible(false);
+        mResultWindow.setVisible(false);
+    }
+
+    @Override
+    public void onScreenShotEnd(Bitmap bitmap) {
+        mClipper.setVisible(true);
+        mResultWindow.setVisible(true);
+
+        if (bitmap == null) {
+            Log.e(TAG, "onScreenShotEnd: " + "screen shot get bitmap error");
+            return;
+        }
+//        int x = mClipper.getX(); int y = mClipper.getY();
+//        int width = mClipper.getWidth();
+//        int height = mClipper.getHeight();
+//        Bitmap b = Bitmap.createBitmap(bitmap, x, y + DensityUtil.getStatusBarHeight(mContext),
+//                width, height);
+//        if (b == null) {
+//            Log.e(TAG, "onScreenShotEnd: " + "create bitmap failed");
+//            return;
+//        }
+//        bitmap.recycle();
+
+        String dirName = Environment.getExternalStorageDirectory().getAbsolutePath()
+                + "/ocrcat";
+        try {
+            File dir = new File(dirName);
+            if (!dir.exists()) {
+                if (!dir.mkdirs()) Log.e(TAG, "onScreenShotEnd: " + "create dir failed");
+            }
+            File file = new File(dirName + "/bitmap" + ".jpg");
+            FileOutputStream out = new FileOutputStream(file);
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 100, out);
+            out.flush();
+            out.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }

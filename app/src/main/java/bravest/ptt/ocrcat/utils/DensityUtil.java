@@ -82,6 +82,15 @@ public class DensityUtil {
     public static int px2dip(Context context, float pxValue) {
         final float scale = context.getResources().getDisplayMetrics().density;
         return (int) (pxValue / scale + 0.5f);
-
     }
+
+    public static int getStatusBarHeight(Context context) {
+        if (context == null) {
+            return 0;
+        }
+        int resourceId
+                = context.getResources().getIdentifier("status_bar_height", "dimen", "android");
+        return (int) context.getResources().getDimension(resourceId);
+    }
+
 }

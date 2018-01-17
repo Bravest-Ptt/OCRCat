@@ -1,6 +1,7 @@
 package bravest.ptt.ocrcat.windows;
 
 import android.content.Context;
+import android.view.View;
 
 import bravest.ptt.ocrcat.windows.i.AbstractWindow;
 
@@ -45,5 +46,11 @@ public class ResultWindow extends AbstractWindow{
     @Override
     public void destroy() {
 
+    }
+
+    public void setVisible(boolean visible) {
+        if (mView != null) {
+            mView.setVisibility(visible ? View.VISIBLE : View.INVISIBLE);
+        }
     }
 }

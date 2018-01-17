@@ -23,6 +23,7 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.widget.Toast;
 
+import bravest.ptt.ocrcat.network.UdpInterface;
 import bravest.ptt.ocrcat.receiver.ScreenshotObserver;
 import bravest.ptt.ocrcat.service.OcrCatService;
 import bravest.ptt.ocrcat.utils.PermissionUtils;
@@ -79,7 +80,6 @@ public class MainActivity extends PreferenceActivity
     private void initVariables() {
         mScreenshotObserver = new ScreenshotObserver(this, null);
         mMpm = (MediaProjectionManager) this.getSystemService(MEDIA_PROJECTION_SERVICE);
-
         PermissionUtils.requestCapturePermission(this, mMpm);
     }
 

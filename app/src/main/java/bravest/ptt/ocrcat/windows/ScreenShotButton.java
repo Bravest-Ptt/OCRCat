@@ -58,7 +58,7 @@ public class ScreenShotButton extends AbstractWindow{
                     releaseImageReader();
                     releaseVirtualDisplay();
                     if (mScreenShotListener != null) {
-                        mScreenShotListener.onScreenShot((Bitmap) msg.obj);
+                        mScreenShotListener.onScreenShotEnd((Bitmap) msg.obj);
                     }
                     break;
                 default:
@@ -68,7 +68,8 @@ public class ScreenShotButton extends AbstractWindow{
     };
 
     public interface OnScreenShotListener {
-        void onScreenShot(Bitmap bitmap);
+        void onScreenShotStart();
+        void onScreenShotEnd(Bitmap bitmap);
     }
 
     public ScreenShotButton(Context context) {
@@ -104,6 +105,7 @@ public class ScreenShotButton extends AbstractWindow{
      * 核心方法，通过MediaProjectionManager获取的截图信息Bitmap
      */
     private void screenShot() {
+        if (mScreenShotListener != null) mScreenShotListener.onScreenShotStart();
         mHandler.postDelayed(new Runnable() {
             @Override
             public void run() {
@@ -127,6 +129,8 @@ public class ScreenShotButton extends AbstractWindow{
         }
         int width = image.getWidth();
         int height = image.getHeight();
+        Log.d(TAG, "startCapture: width = " + width
+                + ", height = " + height);
         final Image.Plane[] planes = image.getPlanes();
         final ByteBuffer buffer = planes[0].getBuffer();
         int pixelStride = planes[0].getPixelStride();
@@ -146,8 +150,9 @@ public class ScreenShotButton extends AbstractWindow{
     private void setUpVirtualDisplay() {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) return;
         int width = DensityUtil.getDeviceWidth(mContext);
-        int height = DensityUtil.getDeviceWidth(mContext);
+        int height = DensityUtil.getDeviceHeight(mContext);
         int dpi = DensityUtil.getDeviceDpi(mContext);
+        Log.d(TAG, "setUpVirtualDisplay: dpi = " + dpi);
         mImageReader = ImageReader.newInstance(width, height, PixelFormat.RGBA_8888, 1);
         mVirtualDisplay = mMp.createVirtualDisplay("ScreenShot", width, height, dpi,
                 DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR,
@@ -184,7 +189,9 @@ public class ScreenShotButton extends AbstractWindow{
                 | WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL
                 | WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
         mLayoutParams.dimAmount = 0.2f;
-        mLayoutParams.type = WindowManager.LayoutParams.TYPE_SYSTEM_ALERT;
+        mLayoutParams.type = Build.VERSION.SDK_INT < Build.VERSION_CODES.O ?
+                WindowManager.LayoutParams.TYPE_SYSTEM_OVERLAY :
+                WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY;
         mLayoutParams.height = WindowManager.LayoutParams.WRAP_CONTENT;
         mLayoutParams.width = WindowManager.LayoutParams.WRAP_CONTENT;
         mLayoutParams.gravity = Gravity.START | Gravity.TOP;
