@@ -7,6 +7,7 @@ import android.content.Context;
 import android.graphics.Point;
 import android.os.Build;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.view.Display;
 import android.view.WindowManager;
 
@@ -14,6 +15,8 @@ import android.view.WindowManager;
  * liujingyuan
  */
 public class DensityUtil {
+
+    private static final String TAG = "DensityUtil";
 
     private static int[] deviceWidthHeight = new int[2];
     private static int deviceWidth = 0;
@@ -24,7 +27,8 @@ public class DensityUtil {
         if (deviceWidth == 0) {
             DisplayMetrics metrics = new DisplayMetrics();
             WindowManager manager = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
-            manager.getDefaultDisplay().getMetrics(metrics);
+            //manager.getDefaultDisplay().getMetrics(metrics);
+            manager.getDefaultDisplay().getRealMetrics(metrics);
             deviceWidth =  metrics.widthPixels;
         }
         return deviceWidth;
@@ -34,7 +38,8 @@ public class DensityUtil {
         if (deviceHeight == 0) {
             DisplayMetrics metrics = new DisplayMetrics();
             WindowManager manager = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
-            manager.getDefaultDisplay().getMetrics(metrics);
+            //manager.getDefaultDisplay().getMetrics(metrics);
+            manager.getDefaultDisplay().getRealMetrics(metrics);
             deviceHeight =  metrics.heightPixels;
         }
         return deviceHeight;
@@ -44,7 +49,8 @@ public class DensityUtil {
         if (deviceDpi == 0) {
             DisplayMetrics metrics = new DisplayMetrics();
             WindowManager manager = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
-            manager.getDefaultDisplay().getMetrics(metrics);
+            //manager.getDefaultDisplay().getMetrics(metrics);
+            manager.getDefaultDisplay().getRealMetrics(metrics);
             deviceDpi =  metrics.densityDpi;
         }
         return deviceDpi;
@@ -54,7 +60,8 @@ public class DensityUtil {
         if ((deviceWidthHeight[0] == 0) && (deviceWidthHeight[1] == 0)) {
             DisplayMetrics metrics = new DisplayMetrics();
             WindowManager manager = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
-            manager.getDefaultDisplay().getMetrics(metrics);
+            //manager.getDefaultDisplay().getMetrics(metrics);
+            manager.getDefaultDisplay().getRealMetrics(metrics);
 
             deviceWidthHeight[0] = metrics.widthPixels;
             deviceWidthHeight[1] = metrics.heightPixels;
@@ -84,7 +91,7 @@ public class DensityUtil {
         return (int) (pxValue / scale + 0.5f);
     }
 
-    public static int getStatusBarHeight(Context context) {
+    public static int getStatusBarHeightDp(Context context) {
         if (context == null) {
             return 0;
         }
@@ -93,4 +100,12 @@ public class DensityUtil {
         return (int) context.getResources().getDimension(resourceId);
     }
 
+    public static int getStatusBarHeightPx(Context context) {
+        if (context == null) {
+            return 0;
+        }
+        int resourceId
+                = context.getResources().getIdentifier("status_bar_height", "dimen", "android");
+        return dip2px(context, (context.getResources().getDimension(resourceId)));
+    }
 }
