@@ -8,10 +8,10 @@ import java.io.File;
 
 public interface IOcr {
     void recognize(String imagePath);
-    void setResultListener(OcrResultListener listener);
+    void setOcrResultListener(OcrResultListener listener);
 
     public interface OcrResultListener {
-        void onResult(String result);
-        void onError(String error);
+        void onOcrResult(String result);
+        void onOcrError(String error);
     }
 }

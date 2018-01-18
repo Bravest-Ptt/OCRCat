@@ -1,7 +1,10 @@
 package bravest.ptt.ocrcat;
 
 import android.Manifest;
+import android.app.Activity;
 import android.content.ComponentName;
+import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
@@ -11,26 +14,27 @@ import android.media.projection.MediaProjectionManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.IBinder;
+import android.preference.CheckBoxPreference;
+import android.preference.EditTextPreference;
 import android.preference.Preference;
 import android.preference.PreferenceActivity;
 import android.preference.SwitchPreference;
-import android.provider.MediaStore;
 import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.os.Bundle;
 import android.support.annotation.RequiresApi;
+import android.support.v7.app.AlertDialog;
 import android.text.TextUtils;
 import android.util.Log;
+import android.widget.EditText;
 import android.widget.Toast;
 
-import bravest.ptt.ocrcat.network.UdpInterface;
-import bravest.ptt.ocrcat.receiver.ScreenshotObserver;
 import bravest.ptt.ocrcat.service.OcrCatService;
 import bravest.ptt.ocrcat.utils.PermissionUtils;
 import bravest.ptt.ocrcat.utils.ToastUtils;
 
 public class MainActivity extends PreferenceActivity
-        implements Preference.OnPreferenceClickListener {
+        implements Preference.OnPreferenceClickListener, Preference.OnPreferenceChangeListener {
 
     private static final String TAG = "MainActivity";
 
@@ -39,12 +43,22 @@ public class MainActivity extends PreferenceActivity
     private static final String KEY_OVERLAY_WINDOW = "switch_window_overlay";
     private static final String KEY_SHOW_WINDOWS = "switch_open";
     private static final String KEY_SCREEN_SHOT = "check_screen_shot";
+    private static final String KEY_OCR_TESSERACT = "ocr_tesseract";
+    private static final String KEY_OCR_TESSERACT_SETTINGS = "ocr_tesseract_settings";
+    private static final String KEY_OCR_TS_SERVER_IP = "ocr_tesseract_server_ip";
+    private static final String KEY_OCR_TS_SERVER_PORT = "ocr_tesseract_server_port";
+    private static final String KEY_OCR_TS_LOCAL_PORT = "ocr_tesseract_local_port";
 
     private SwitchPreference mOverlayWindowPreference;
     private SwitchPreference mShowWindowsPreference;
     private Preference mScreenShotPreference;
+    private CheckBoxPreference mTesseractPreferecnce;
+    private Preference mTesseractSettings;
+    private EditTextPreference mTsServerIp;
+    private EditTextPreference mTsServerPort;
+    private EditTextPreference mTsLocalPort;
 
-    private ScreenshotObserver mScreenshotObserver;
+    private Context mContext;
     private SharedPreferences mSp;
     private MediaProjectionManager mMpm;
     private OcrCatService mService;
@@ -69,6 +83,21 @@ public class MainActivity extends PreferenceActivity
         bindService();
         initVariables();
         initPreferences();
+
+        initScreenShotPermissionDialog();
+    }
+
+    private void initScreenShotPermissionDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("截屏权限")
+                .setMessage("请求截屏权限中，请赋予我力量吧")
+                .setNegativeButton("不给", null)
+                .setPositiveButton("给", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        PermissionUtils.requestCapturePermission((Activity) mContext, mMpm);
+                    }
+                }).show();
     }
 
     private void bindService() {
@@ -78,9 +107,9 @@ public class MainActivity extends PreferenceActivity
     }
 
     private void initVariables() {
-        mScreenshotObserver = new ScreenshotObserver(this, null);
+        mContext = this;
+        mSp = getPreferenceScreen().getSharedPreferences();
         mMpm = (MediaProjectionManager) this.getSystemService(MEDIA_PROJECTION_SERVICE);
-        PermissionUtils.requestCapturePermission(this, mMpm);
     }
 
     private void initPreferences() {
@@ -93,14 +122,40 @@ public class MainActivity extends PreferenceActivity
         mScreenShotPreference = findPreference(KEY_SCREEN_SHOT);
         mScreenShotPreference.setOnPreferenceClickListener(this);
 
-        mSp = getPreferenceScreen().getSharedPreferences();
+        mTesseractPreferecnce = (CheckBoxPreference) findPreference(KEY_OCR_TESSERACT);
+        mTesseractPreferecnce.setOnPreferenceClickListener(this);
+
+        mTesseractSettings = findPreference(KEY_OCR_TESSERACT_SETTINGS);
+        mTesseractSettings.setEnabled(mSp.getBoolean(KEY_OCR_TESSERACT, false));
+
+        mTsServerIp = (EditTextPreference) findPreference(KEY_OCR_TS_SERVER_IP);
+        mTsServerIp.setOnPreferenceChangeListener(this);
+
+        mTsServerPort = (EditTextPreference) findPreference(KEY_OCR_TS_SERVER_PORT);
+        mTsServerPort.setOnPreferenceChangeListener(this);
+
+        mTsLocalPort = (EditTextPreference) findPreference(KEY_OCR_TS_LOCAL_PORT);
+        mTsLocalPort.setOnPreferenceChangeListener(this);
+
+        if (TextUtils.equals(mSp.getString(KEY_OCR_TS_SERVER_IP, "--"), "--")) {
+            mTsServerIp.setText("104.194.94.128");
+        }
+        if (TextUtils.equals(mSp.getString(KEY_OCR_TS_SERVER_PORT, "--"), "--")) {
+            mTsServerPort.setText("50028");
+        }
+        if (TextUtils.equals(mSp.getString(KEY_OCR_TS_LOCAL_PORT, "--"), "--")) {
+            mTsLocalPort.setText("50028");
+        }
+
+        //init edit text p
+        mTsServerIp.setSummary(mSp.getString(KEY_OCR_TS_SERVER_IP, "--"));
+        mTsServerPort.setSummary(mSp.getString(KEY_OCR_TS_SERVER_PORT, "--"));
+        mTsLocalPort.setSummary(mSp.getString(KEY_OCR_TS_LOCAL_PORT, "--"));
     }
 
     @Override
     protected void onStart() {
         super.onStart();
-        Uri imageUri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
-        this.getContentResolver().registerContentObserver(imageUri, false, mScreenshotObserver);
     }
 
     @RequiresApi(api = Build.VERSION_CODES.M)
@@ -175,7 +230,6 @@ public class MainActivity extends PreferenceActivity
     @Override
     protected void onStop() {
         super.onStop();
-        this.getContentResolver().unregisterContentObserver(mScreenshotObserver);
     }
 
     @Override
@@ -207,8 +261,24 @@ public class MainActivity extends PreferenceActivity
             return true;
         } else if (preference == mScreenShotPreference && Build.VERSION.SDK_INT >= 21) {
             PermissionUtils.requestCapturePermission(this, mMpm);
+        } else if (preference == mTesseractPreferecnce) {
+            mTesseractSettings.setEnabled(mSp.getBoolean(KEY_OCR_TESSERACT, false));
+            return true;
         }
         return false;
+    }
+
+    @Override
+    public boolean onPreferenceChange(Preference preference, Object newValue) {
+        if (preference == mTsServerIp) {
+            mTsServerIp.setSummary(newValue.toString());
+        } else if (preference == mTsServerPort) {
+            mTsServerPort.setSummary(newValue.toString());
+        } else if (preference == mTsLocalPort) {
+            mTsLocalPort.setSummary(newValue.toString());
+        }
+        // false 不能保存值
+        return true;
     }
 
     /**

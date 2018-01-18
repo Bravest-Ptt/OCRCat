@@ -8,34 +8,43 @@ import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
 
+import com.google.gson.Gson;
+
 import java.io.File;
 import java.io.FileOutputStream;
 
+import bravest.ptt.ocrcat.network.UdpInterface;
+import bravest.ptt.ocrcat.ocr.IOcr;
+import bravest.ptt.ocrcat.ocr.baidu.BaiduOcr;
 import bravest.ptt.ocrcat.utils.DensityUtil;
 
 /**
  * Created by pengtian on 2018/1/14.
  */
 
-public class OcrCatWindowManager implements ScreenShotButton.OnScreenShotListener{
+public class OcrCatWindowManager implements ScreenShotButton.OnScreenShotListener,
+        IOcr.OcrResultListener, UdpInterface.OnMessageObtainedListener{
     private static final String TAG = "OcrCatWindowManager";
 
     private Context mContext;
     private ScreenShotButton mButton;
     private ScreenClipperWindow mClipper;
     private ResultWindow mResultWindow;
-
-    private Handler mHandler = new Handler() {
-        @Override
-        public void handleMessage(Message msg) {
-            super.handleMessage(msg);
-
-        }
-    };
+    private IOcr mOcr;
+    private UdpInterface mUdp;
 
     public OcrCatWindowManager(Context context) {
         mContext = context;
+        initVariables();
         initWindows();
+    }
+
+    private void initVariables() {
+        mOcr = new BaiduOcr();
+        mOcr.setOcrResultListener(this);
+
+        mUdp = new UdpInterface();
+        mUdp.setMessageListener(this);
     }
 
     private void initWindows() {
@@ -81,6 +90,14 @@ public class OcrCatWindowManager implements ScreenShotButton.OnScreenShotListene
             Log.e(TAG, "onScreenShotEnd: " + "screen shot get bitmap error");
             return;
         }
+
+        String imagePath = storeScreenCaptureToFile(bitmap);
+        if (imagePath == null) return;
+
+        recognizeImage(imagePath);
+    }
+
+    private String storeScreenCaptureToFile(Bitmap bitmap) {
         int x = mClipper.getX(); int y = mClipper.getY();
         int width = mClipper.getWidth();
         int height = mClipper.getHeight();
@@ -90,7 +107,7 @@ public class OcrCatWindowManager implements ScreenShotButton.OnScreenShotListene
                 width, height);
         if (b == null) {
             Log.e(TAG, "onScreenShotEnd: " + "create bitmap failed");
-            return;
+            return null;
         }
         bitmap.recycle();
 
@@ -106,8 +123,47 @@ public class OcrCatWindowManager implements ScreenShotButton.OnScreenShotListene
             b.compress(Bitmap.CompressFormat.JPEG, 100, out);
             out.flush();
             out.close();
+            return file.getAbsolutePath();
         } catch (Exception e) {
             e.printStackTrace();
         }
+        return null;
+    }
+
+    private void recognizeImage(String imagePath) {
+        Log.d(TAG, "recognizeImage: imagePath = " + imagePath);
+        mOcr.recognize(imagePath);
+    }
+
+    @Override
+    public void onOcrResult(String result) {
+        //send result to searcher
+        Log.d(TAG, "onOcrResult: result = " + result);
+        mUdp.send(result);
+    }
+
+    @Override
+    public void onOcrError(String error) {
+        if (mResultWindow != null) {
+            Log.d(TAG, "onOcrError: error = " + error);
+            mResultWindow.setVisible(true);
+            mResultWindow.setText("失败：" + error);
+        }
+    }
+
+    @Override
+    public void onMessageObtained(String msg) {
+        if (mResultWindow != null) {
+            Log.d(TAG, "onOcrError: msg = " + msg);
+            mResultWindow.setVisible(true);
+            mResultWindow.setText(msg);
+        }
+    }
+
+    public void destroy() {
+        mUdp.close();
+        mResultWindow.destroy();
+        mButton.destroy();
+        mClipper.destroy();
     }
 }

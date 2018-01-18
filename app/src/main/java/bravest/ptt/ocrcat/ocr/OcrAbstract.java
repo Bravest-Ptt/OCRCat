@@ -12,7 +12,7 @@ public abstract class OcrAbstract implements IOcr {
     protected OcrResultListener mOcrResultListener;
 
     @Override
-    public void setResultListener(OcrResultListener listener) {
+    public void setOcrResultListener(OcrResultListener listener) {
         mOcrResultListener = listener;
     }
 }

@@ -15,4 +15,62 @@
         android:key="check_screen_shot"
         android:summary="点我，选中弹框的‘不再显示’，然后点击‘立即开始’"
         android:title="截屏权限" />
+
+    <PreferenceCategory android:title="搜索引擎">
+        <CheckBoxPreference
+            android:key="search_baidu"
+            android:title="百度"
+            android:defaultValue="true"
+            android:enabled="false"
+            android:summary="默认"
+            />
+        <CheckBoxPreference
+            android:key="search_bing"
+            android:title="必应"
+            android:defaultValue="false"
+            android:enabled="false"
+            android:summary="开发中，暂不支持"
+            />
+        <CheckBoxPreference
+            android:key="search_google"
+            android:title="谷歌"
+            android:defaultValue="false"
+            android:enabled="false"
+            android:summary="开发中，暂不支持"
+            />
+    </PreferenceCategory>
+
+    <PreferenceCategory android:title="Ocr服务提供商">
+        <CheckBoxPreference
+            android:defaultValue="true"
+            android:key="ocr_baidu"
+            android:summary="速度快，识别准，限量500/天"
+            android:title="百度Ocr" />
+        <CheckBoxPreference
+            android:defaultValue="true"
+            android:key="ocr_tesseract"
+            android:summary="免费试用，不限量"
+            android:title="Tesseract" />
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        android:key="ocr_tesseract_settings"
+        android:enabled="false"
+        android:title="Tesseract设置">
+        <EditTextPreference
+            android:key="ocr_tesseract_server_ip"
+            android:summary="104.194.94.128"
+            android:phoneNumber="true"
+            android:title="服务器地址" />
+        <EditTextPreference
+            android:key="ocr_tesseract_server_port"
+            android:phoneNumber="true"
+            android:summary="50028"
+            android:title="服务器端口" />
+        <EditTextPreference
+            android:key="ocr_tesseract_local_port"
+            android:phoneNumber="true"
+            android:summary="50028"
+            android:title="本地端口" />
+    </PreferenceCategory>
 </PreferenceScreen>
